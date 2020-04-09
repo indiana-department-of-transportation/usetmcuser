@@ -7,7 +7,7 @@
  * @copyright INDOT, 2019
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import useDataStore from '@indot/react-ctx-store';
@@ -72,28 +72,29 @@ const useLogin = (fetchFn = fetch): [
 
   // This will appease the typechecker: since the type is different between node and the
   // browser this dodges the issue of typing it properly e.g. via ReturnType.
-  // const timeoutHandle = useRef(setTimeout(emptyFn, 0));
   const [timeoutHandle, setTimeoutHandle] = useState(setTimeout(emptyFn, 0));
   const [localUser, setLocalUser] = useLocalState(userURL, DEFAULT_USER_DATA);
   const [loggedInUser, dispatch] = useUserState();
   const [headers, setHeaders] = useState<Headers>();
   const [trigger, setTrigger] = useState(false);
 
-  const login = (userName: string, userPass: string) => {
+  // Need to wrap in useCallback so children can use these in useEffect
+  // dependency lists.
+  const login = useCallback((userName: string, userPass: string) => {
     setHeaders(authHeader(userName, userPass));
     setTrigger(true);
-  }
+  }, []);
 
-  const logoff = () => {
+  const logoff = useCallback(() => {
     setLocalUser(DEFAULT_USER_DATA);
     dispatch({ type: 'logoff' });
-  };
+  }, []);
 
-  const resetLogoffTimeout = (timeout = LOGON_TIMEOUT) => {
+  const resetLogoffTimeout = useCallback((timeout = LOGON_TIMEOUT) => {
     clearTimeout(timeoutHandle);
     setTimeoutHandle(setTimeout(logoff, timeout));
     dispatch({ type: 'reauth' });
-  };
+  }, []);
 
   useEffect(() => {
     if (!loggedInUser || !loggedInUser.token && localUser.token) {

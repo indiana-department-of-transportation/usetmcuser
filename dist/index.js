@@ -60,25 +60,26 @@ const useLogin = (fetchFn = fetch) => {
         + '/user/auth';
     // This will appease the typechecker: since the type is different between node and the
     // browser this dodges the issue of typing it properly e.g. via ReturnType.
-    // const timeoutHandle = useRef(setTimeout(emptyFn, 0));
     const [timeoutHandle, setTimeoutHandle] = react_1.useState(setTimeout(ts_utils_1.emptyFn, 0));
     const [localUser, setLocalUser] = state_hooks_1.useLocalState(userURL, DEFAULT_USER_DATA);
     const [loggedInUser, dispatch] = useUserState();
     const [headers, setHeaders] = react_1.useState();
     const [trigger, setTrigger] = react_1.useState(false);
-    const login = (userName, userPass) => {
+    // Need to wrap in useCallback so children can use these in useEffect
+    // dependency lists.
+    const login = react_1.useCallback((userName, userPass) => {
         setHeaders(exports.authHeader(userName, userPass));
         setTrigger(true);
-    };
-    const logoff = () => {
+    }, []);
+    const logoff = react_1.useCallback(() => {
         setLocalUser(DEFAULT_USER_DATA);
         dispatch({ type: 'logoff' });
-    };
-    const resetLogoffTimeout = (timeout = LOGON_TIMEOUT) => {
+    }, []);
+    const resetLogoffTimeout = react_1.useCallback((timeout = LOGON_TIMEOUT) => {
         clearTimeout(timeoutHandle);
         setTimeoutHandle(setTimeout(logoff, timeout));
         dispatch({ type: 'reauth' });
-    };
+    }, []);
     react_1.useEffect(() => {
         if (!loggedInUser || !loggedInUser.token && localUser.token) {
             const userTimeUp = (localUser.lastAuthed || 0) + LOGON_TIMEOUT;
