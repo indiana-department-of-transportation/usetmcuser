@@ -49,12 +49,13 @@ const DEFAULT_USER_DATA = {
     lastAuthed: null,
     userError: null,
 };
-const [useUserState, CtxProvider] = react_ctx_store_1.default(DEFAULT_USER_DATA);
+const [useUserState, CtxProvider] = react_ctx_store_1.default();
 const ONE_HOUR = 1000 * 60 * 60;
 const ONE_DAY = ONE_HOUR * 24;
 const LOGON_TIMEOUT = Number(process
     && ((_a = process === null || process === void 0 ? void 0 : process.env) === null || _a === void 0 ? void 0 : _a.REACT_APP_LOGON_TIMEOUT)) || ONE_DAY;
 const useLogin = (fetchFn = fetch) => {
+    // eslint-disable-next-line no-restricted-globals
     const userURL = ((location === null || location === void 0 ? void 0 : location.origin) === 'null' ? '' : location.origin)
         + (process.env.REACT_APP_BACKEND_URL || '')
         + '/user/auth';
@@ -81,7 +82,7 @@ const useLogin = (fetchFn = fetch) => {
         dispatch({ type: 'reauth' });
     }, []);
     react_1.useEffect(() => {
-        if (!loggedInUser || !loggedInUser.token && localUser.token) {
+        if ((!loggedInUser || !loggedInUser.token) && localUser.token) {
             const userTimeUp = (localUser.lastAuthed || 0) + LOGON_TIMEOUT;
             const now = Date.now();
             if (localUser.token
@@ -143,7 +144,7 @@ const reducer = (state, action) => {
  * @param {Any} props.children The children to render.
  * @returns {Function} The user context provider.
  */
-const UserContextProvider = ({ children }) => (react_1.default.createElement(CtxProvider, { reducer: reducer }, children));
+const UserContextProvider = ({ children }) => (react_1.default.createElement(CtxProvider, { reducer: reducer, initialState: DEFAULT_USER_DATA }, children));
 exports.UserContextProvider = UserContextProvider;
 UserContextProvider.propTypes = {
     children: prop_types_1.default.node.isRequired,

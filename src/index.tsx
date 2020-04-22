@@ -10,7 +10,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import useDataStore from '@indot/react-ctx-store';
+import createDataStore from '@indot/react-ctx-store';
 import { useLocalState } from '@indot/state-hooks';
 
 import { emptyFn } from '@jasmith79/ts-utils';
@@ -52,20 +52,21 @@ const DEFAULT_USER_DATA: IUserData = {
   userError: null,
 };
 
-const [useUserState, CtxProvider] = useDataStore<IUserData, UserReducerAction>(DEFAULT_USER_DATA);
+const [useUserState, CtxProvider] = createDataStore<IUserData, UserReducerAction>();
 
 const ONE_HOUR = 1000 * 60 * 60;
 const ONE_DAY = ONE_HOUR * 24;
 const LOGON_TIMEOUT = Number(
   process
-    && process?.env?.REACT_APP_LOGON_TIMEOUT
-  ) || ONE_DAY;
+  && process?.env?.REACT_APP_LOGON_TIMEOUT
+) || ONE_DAY;
 
 const useLogin = (fetchFn = fetch): [
   (userName: string, userPass: string) => void,
   () => void,
   (timeout?: number) => void,
 ] => {
+  // eslint-disable-next-line no-restricted-globals
   const userURL = (location?.origin === 'null' ? '' : location.origin)
     + (process.env.REACT_APP_BACKEND_URL || '')
     + '/user/auth';
@@ -97,7 +98,7 @@ const useLogin = (fetchFn = fetch): [
   }, []);
 
   useEffect(() => {
-    if (!loggedInUser || !loggedInUser.token && localUser.token) {
+    if ((!loggedInUser || !loggedInUser.token) && localUser.token) {
       const userTimeUp = (localUser.lastAuthed || 0) + LOGON_TIMEOUT;
       const now = Date.now();
 
@@ -175,7 +176,7 @@ const reducer = (state: IUserData, action: UserReducerAction): IUserData => {
     case 'clear error':
       return {
         ...state,
-        userError : null,
+        userError: null,
       };
   }
 };
@@ -188,7 +189,7 @@ const reducer = (state: IUserData, action: UserReducerAction): IUserData => {
  * @returns {Function} The user context provider.
  */
 const UserContextProvider = ({ children }: { children: React.ReactNode }) => (
-  <CtxProvider reducer={reducer}>
+  <CtxProvider reducer={reducer} initialState={DEFAULT_USER_DATA}>
     {children}
   </CtxProvider>
 );
